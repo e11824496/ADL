@@ -1,0 +1,53 @@
+{
+    "Income": [
+        "Salary",
+        "Refund",
+        "Other"
+    ],
+    "Housing": [
+        "Rent",
+        "Utilities",
+        "Furniture",
+        "Other"
+    ],
+    "Food": [
+        "Groceries",
+        "Restaurants",
+        "Other"
+    ],
+    "Transportation": [
+        "Public Transportation",
+        "Taxi",
+        "Other"
+    ],
+    "Health": [
+        "Medical",
+        "Pharmacy",
+        "Other"
+    ],
+    "Sport": [
+        "Sport",
+        "Equipment",
+        "Other"
+    ],
+    "Shopping": [
+        "Clothing",
+        "Electronics",
+        "Gifts",
+        "Other"
+    ],
+    "Lifestyle": [
+        "Entertainment",
+        "Cash",
+        "Other"
+    ],
+    "Travel": [
+        "Transit",
+        "Hotel",
+        "Other"
+    ],
+    "Other": [
+        "Fees",
+        "Other"
+    ]
+}

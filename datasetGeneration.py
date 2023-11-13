@@ -78,15 +78,14 @@ class BankStatementProcessor:
             self._replace_paypal_payment, axis=1)
         self.bank_statements = self.bank_statements.apply(
             self._shorten_description, axis=1)
-        self.bank_statements_text = self.bank_statements.apply(
-            self.create_statement_string, axis=1)
+        self.bank_statements = self.bank_statements[['Time', 'Description', 'Amount']]                   # noqa: E501
 
     def save_to_csv(self, output_file: str) -> None:
-        self.bank_statements_text.to_csv(output_file, header=True, index=False)
+        self.bank_statements.to_csv(output_file, header=True)
 
 
 if __name__ == '__main__':
     processor = BankStatementProcessor(
         'BankStatements/export.csv', 'BankStatements/paypal.csv')
     processor.create_dataset()
-    processor.save_to_csv('output.csv')
+    processor.save_to_csv('BankStatements/output.csv')
