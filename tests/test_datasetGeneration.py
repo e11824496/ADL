@@ -14,9 +14,10 @@ class TestBankStatementProcessor(unittest.TestCase):
             processor.bank_statements.shape, (1, 6))
 
         # Assert that the paypal_data DataFrame is created as expected
-        expected_columns = ['Uhrzeit', 'Name', 'Brutto',
-                            'Transaktionscode', 'Artikelbezeichnung',
-                            'Zugehöriger Transaktionscode', 'Bankreferenz']
+        expected_columns = ['Time', 'Name', 'Gross',
+                            "Transaction ID", "Item Title",
+                            "Reference Txn ID", "Bank Reference ID"]
+
         self.assertTrue(set(processor.paypal_data.columns).issuperset(
             set(expected_columns)))
         self.assertEqual(
@@ -36,14 +37,15 @@ class TestBankStatementProcessor(unittest.TestCase):
         self.assertEqual(
             processor.bank_statements.shape, (1, 3))
 
-        expected_columns = ['Uhrzeit', 'Name', 'Brutto',
-                            'Transaktionscode', 'Artikelbezeichnung',
-                            'Zugehöriger Transaktionscode']
+        expected_columns = ['Time', 'Name', 'Gross',
+                            "Transaction ID", "Item Title",
+                            "Reference Txn ID"]
+
         self.assertEqual(
             set(processor.paypal_data.columns),  set(expected_columns))
 
         # Assert that Bankreferenz is the index of the df
-        self.assertEqual(processor.paypal_data.index.name, 'Bankreferenz')
+        self.assertEqual(processor.paypal_data.index.name, "Bank Reference ID")
 
     def test_is_paypal_payment(self):
         processor = BankStatementProcessor(
