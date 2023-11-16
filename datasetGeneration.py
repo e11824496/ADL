@@ -24,18 +24,18 @@ class BankStatementProcessor:
 
         # Filter PayPal data to separate bank references
         paypal_references = self.paypal_data[[
-            'Zugehöriger Transaktionscode', 'Bankreferenz']
-        ].loc[self.paypal_data['Bankreferenz'].notnull()]
-        temp = self.paypal_data[['Uhrzeit', 'Name',
-                                 'Brutto', 'Transaktionscode',
-                                 'Artikelbezeichnung']
+            'Reference Txn ID', 'Bank Reference ID']
+        ].loc[self.paypal_data['Bank Reference ID'].notnull()]
+        temp = self.paypal_data[['Time', 'Name',
+                                 'Gross', 'Transaction ID',
+                                 'Item Title']
                                 ]
-        self.paypal_data = temp.loc[self.paypal_data['Bankreferenz'].isnull()]                          # noqa: E501
+        self.paypal_data = temp.loc[self.paypal_data['Bank Reference ID'].isnull()]                          # noqa: E501
 
-        # Merge multiple PayPal rows based on 'Transaktionscode'
+        # Merge multiple PayPal rows based on 'Transaction ID'
         self.paypal_data = self.paypal_data.merge(
-            paypal_references, left_on='Transaktionscode', right_on='Zugehöriger Transaktionscode', how='inner')     # noqa: E501
-        self.paypal_data.set_index('Bankreferenz', inplace=True)
+            paypal_references, left_on='Transaction ID', right_on='Reference Txn ID', how='inner')     # noqa: E501
+        self.paypal_data.set_index('Bank Reference ID', inplace=True)
 
     def _is_paypal_payment(self, row: pd.Series) -> bool:
         return 'PayPal' in row['Description']
@@ -53,10 +53,10 @@ class BankStatementProcessor:
 
             paypal_row = self.paypal_data.loc[bank_reference]
             row['Description'] = f"Verwendungsweck: PayPal {paypal_row['Name']}"                    # noqa: E501
-            if not pd.isnull(paypal_row['Artikelbezeichnung']):
-                row['Description'] += f" - {paypal_row['Artikelbezeichnung']}"
+            if not pd.isnull(paypal_row['Item Title']):
+                row['Description'] += f" - {paypal_row['Item Title']}"
 
-            time = pd.to_datetime(paypal_row['Uhrzeit'], format='%H:%M:%S')
+            time = pd.to_datetime(paypal_row['Time'], format='%H:%M:%S')
             time += pd.Timedelta(hours=8)
             row['Time'] = time.strftime('%H:%M:%S')
         return row
