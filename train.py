@@ -2,11 +2,12 @@ from torch.utils.data import Dataset
 import torch
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
-from sklearn.model_selection import train_test_split
+# from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn import preprocessing
 from tqdm import tqdm
 import pandas as pd
+import json
 
 from model import Model
 
@@ -18,7 +19,12 @@ texts_df = texts_df[:len(labels_df)]
 
 labels_df['category'] = labels_df['category_group'] + \
     '/' + labels_df['category_subgroup']
-num_classes = len(labels_df['category'].unique())
+with open('categories.json', 'r') as f:
+    classes = json.load(f)
+
+classes_list = [f'{k}/{x}' for k, v in classes.items() for x in v]
+num_classes = len(classes_list)
+print(f'Num of Classes: {num_classes}')
 
 
 class CustomDataset(Dataset):
@@ -30,6 +36,7 @@ class CustomDataset(Dataset):
         self.labels = labels_df['category'].tolist()
 
         le = preprocessing.LabelEncoder()
+        le = le.fit(classes_list)
         self.labels = le.fit_transform(self.labels)
 
     def __len__(self):

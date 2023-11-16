@@ -63,13 +63,15 @@ class Model(torch.nn.Module):
                 description: Union[str, list[str]],
                 time: Union[str, list[str]],
                 amount: Union[str, list[str]],
-                label: Union[int, list[int]]) -> Tensor:
+                label: Union[int, list[int]] = None) -> Tensor:
         if isinstance(description, str):
             description = [description]
         if isinstance(time, str):
             time = [time]
-        if isinstance(amount, str):
+        if isinstance(amount, float):
             amount = [amount]
+        if isinstance(time, str):
+            time = [time]
 
         x = [f'Time: {time}, Amount: {amount}, Description: {description}'
              for time, amount, description in zip(time, amount, description)]
@@ -78,7 +80,9 @@ class Model(torch.nn.Module):
         x = self.dropout(x)
         x = self.fc2(x)
 
-        loss = self.loss_fn(x, label)
+        loss = None
+        if label:
+            loss = self.loss_fn(x, label)
 
         return {
             'logits': x,
