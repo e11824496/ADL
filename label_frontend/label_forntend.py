@@ -1,8 +1,55 @@
 import streamlit as st
 import pandas as pd
 import json
+import requests
 
-# st.set_page_config(layout="wide")
+API_URL = "http://localhost:8000/classify"
+
+
+def get_prediction():
+    predictions = st.session_state.predictions
+    current_line = st.session_state.current_line
+    return predictions.get(current_line) if predictions else None
+
+
+def fetch_prediction_data(line):
+    row = st.session_state.data.iloc[line]
+    return {
+        'amount': float(row.get('Amount', '0').replace(',', '.')),
+        'description': row.get('Description', ''),
+        'time': row.get('Time', '')
+    }
+
+
+def make_prediction_request(data):
+    try:
+        response = requests.post(API_URL, json=data)
+        response.raise_for_status()
+        return json.loads(response.text).split('/') if response.status_code == 200 else None
+    except requests.exceptions.RequestException as e:
+        st.error(f"Prediction request failed: {e}")
+        return None
+
+
+def fetch_next_predictions():
+    max_lines = 10
+    current_line = st.session_state.current_line
+    data_index_len = len(st.session_state.data.index)
+
+    for i in range(max_lines + 1):
+        line = (current_line + i) % data_index_len
+
+        if line in st.session_state.labels.index or \
+                line in st.session_state.predictions:
+            continue
+
+        data = fetch_prediction_data(line)
+        predictions = make_prediction_request(data)
+
+        if predictions:
+            st.session_state.predictions[i] = predictions
+            if i == 0:
+                st.rerun()
 
 
 @st.cache_data
@@ -53,10 +100,12 @@ def set_labels():
 
 def submit():
     labels = st.session_state.labels
-    labels.loc[len(labels.index)] = {
+    cl = st.session_state.current_line
+    labels.loc[cl] = {
         'category_group': st.session_state.category_group,
         'category_subgroup': st.session_state.category_subgroup
     }
+    st.session_state.predictions.pop(cl, None)
     st.session_state.category_group = None
     st.session_state.category_subgroup = None
     st.session_state.current_line += 1
@@ -89,6 +138,7 @@ def main():
         'category_group': [],
         'category_subgroup': []
     }))
+    st.session_state.setdefault("predictions", {})
 
     CATEGORIES = load_categories("../categories.json")
 
@@ -108,6 +158,11 @@ def main():
 
     if st.session_state.data is not None:
         data = st.session_state.data
+
+        prediction = get_prediction()
+        if prediction and st.session_state.category_group is None:
+            st.session_state.category_group = prediction[0]
+            st.session_state.category_subgroup = prediction[1]
 
         st.subheader("Data")
 
@@ -150,9 +205,13 @@ def main():
                     type='primary' if highlight else 'secondary')
 
         if st.session_state.category_subgroup:
-            st.button("Submit",
+            text = 'Edit' if st.session_state.current_line in \
+                st.session_state.labels.index else 'Submit'
+            st.button(text,
                       use_container_width=True, type='primary',
                       on_click=submit)
+
+        fetch_next_predictions()
 
 
 if __name__ == "__main__":
