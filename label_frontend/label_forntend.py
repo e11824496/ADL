@@ -25,7 +25,8 @@ def make_prediction_request(data):
     try:
         response = requests.post(API_URL, json=data)
         response.raise_for_status()
-        return json.loads(response.text).split('/') if response.status_code == 200 else None
+        return json.loads(response.text).split('/') if \
+            response.status_code == 200 else None
     except requests.exceptions.RequestException as e:
         st.error(f"Prediction request failed: {e}")
         return None

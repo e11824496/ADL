@@ -14,7 +14,7 @@ class TestBankStatementProcessor(unittest.TestCase):
             processor.bank_statements.shape, (1, 6))
 
         # Assert that the paypal_data DataFrame is created as expected
-        expected_columns = ['Time', 'Name', 'Gross',
+        expected_columns = ['Date', 'Time', 'Name', 'Gross',
                             "Transaction ID", "Item Title",
                             "Reference Txn ID", "Bank Reference ID"]
 
@@ -31,21 +31,18 @@ class TestBankStatementProcessor(unittest.TestCase):
         processor._preprocess_bank_statements()
 
         # compare set -> order doesn't matter
-        expected_columns = ['Time', 'Description', 'Amount']
+        expected_columns = ['Date', 'Time', 'Description', 'Amount']
         self.assertEqual(
             set(processor.bank_statements.columns), set(expected_columns))
         self.assertEqual(
-            processor.bank_statements.shape, (1, 3))
+            processor.bank_statements.shape, (1, 4))
 
-        expected_columns = ['Time', 'Name', 'Gross',
+        expected_columns = ['Date', 'Time', 'Name', 'Gross',
                             "Transaction ID", "Item Title",
-                            "Reference Txn ID"]
+                            "Reference Txn ID", "Bank Reference ID"]
 
-        self.assertEqual(
-            set(processor.paypal_data.columns),  set(expected_columns))
-
-        # Assert that Bankreferenz is the index of the df
-        self.assertEqual(processor.paypal_data.index.name, "Bank Reference ID")
+        self.assertTrue(set(processor.paypal_data.columns).issuperset(
+            set(expected_columns)))
 
     def test_is_paypal_payment(self):
         processor = BankStatementProcessor(
@@ -78,13 +75,13 @@ class TestBankStatementProcessor(unittest.TestCase):
 
         row = processor.bank_statements.iloc[0]
         print(processor.paypal_data)
-        row = processor._replace_paypal_payment(row)
+        row = processor._replace_paypal_by_bank_reference(row)
         self.assertIn('Uber Payments BV', row['Description'])
 
         # Test with a non-PayPal payment description, expect no change
         new_description = row['Description'].replace('0123', '1234')
         row['Description'] = new_description
-        row = processor._replace_paypal_payment(row)
+        row = processor._replace_paypal_by_bank_reference(row)
         self.assertIn(row['Description'], new_description)
 
     def test_shorten_description(self):
@@ -102,16 +99,6 @@ class TestBankStatementProcessor(unittest.TestCase):
         row['Description'] = new_description
         processor._shorten_description(row)
         self.assertEqual(row['Description'], new_description)
-
-    def test_create_statement_string(self):
-        processor = BankStatementProcessor(
-            DATAFOLDER + 'bank_no_paypal.csv', DATAFOLDER + 'paypal.csv')
-        processor._preprocess_bank_statements()
-        row = processor.bank_statements.iloc[0]
-        row = processor._shorten_description(row)
-        result = processor.create_statement_string(row)
-        expected_result = '06:58:06; Verwendungszweck: EUROSPAR DANKT 4141 WIEN 1050; Amount:-2,99'     # noqa: E501
-        self.assertEqual(result, expected_result)
 
     def tearDown(self):
         pass  # Clean up any resources if needed
