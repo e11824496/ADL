@@ -15,7 +15,7 @@ def get_prediction():
 def fetch_prediction_data(line):
     row = st.session_state.data.iloc[line]
     return {
-        'amount': float(row.get('Amount', '0').replace(',', '.')),
+        'amount': row.get('Amount', 0),
         'description': row.get('Description', ''),
         'time': row.get('Time', '')
     }
@@ -48,7 +48,7 @@ def fetch_next_predictions():
         predictions = make_prediction_request(data)
 
         if predictions:
-            st.session_state.predictions[i] = predictions
+            st.session_state.predictions[current_line + i] = predictions
             if i == 0:
                 st.rerun()
 

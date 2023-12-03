@@ -2,7 +2,7 @@ from torch.utils.data import Dataset
 import torch
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
-# from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn import preprocessing
 from tqdm import tqdm
@@ -37,7 +37,7 @@ class CustomDataset(Dataset):
 
         le = preprocessing.LabelEncoder()
         le = le.fit(classes_list)
-        self.labels = le.fit_transform(self.labels)
+        self.labels = le.transform(self.labels)
 
     def __len__(self):
         return len(self.descriptions)
@@ -53,11 +53,8 @@ class CustomDataset(Dataset):
 
 
 # Split the data into training and validation sets
-# train_texts, val_texts, train_labels, val_labels = train_test_split(
-#    texts_df, labels_df, test_size=0.2, random_state=42)
-
-train_texts = val_texts = texts_df
-train_labels = val_labels = labels_df
+train_texts, val_texts, train_labels, val_labels = train_test_split(
+    texts_df, labels_df, test_size=0.2, random_state=42)
 
 train_dataset = CustomDataset(train_texts, train_labels)
 val_dataset = CustomDataset(val_texts, val_labels)
@@ -79,7 +76,7 @@ optimizer = AdamW([
     {'params': model.fc2.parameters()},
 ], lr=5e-3)
 
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
 
 # Training loop
 epochs = 30
@@ -87,14 +84,15 @@ epochs = 30
 
 for epoch in range(epochs):
     model.train()
+    total_loss = 0
     for batch in tqdm(train_loader, desc=f"Epoch {epoch + 1}"):
         optimizer.zero_grad()
         outputs = model(**batch)
         loss = outputs['loss']
-        print(loss)
         loss.backward()
+        total_loss += loss.item()
         optimizer.step()
-        scheduler.step()
+    scheduler.step()
 
     # Validation
     model.eval()
@@ -109,7 +107,9 @@ for epoch in range(epochs):
             val_gt.extend(batch['label'].cpu().numpy())
 
     accuracy = accuracy_score(val_gt, val_preds)
-    print(f"Epoch {epoch + 1} - Validation Accuracy: {accuracy:.4f}")
+    print(
+        f"Epoch {epoch + 1} - Validation Accuracy: {accuracy:.4f} -" +
+        f" Total Loss: {total_loss:.4f}")
 
-# Save the trained model
-torch.save(model.state_dict(), 'model.pt')
+    # Save the trained model
+    torch.save(model.state_dict(), 'model.pt')

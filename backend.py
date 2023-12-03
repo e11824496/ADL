@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import uvicorn
 import json
 import torch
+from sklearn import preprocessing
 
 
 from model import Model
@@ -16,6 +17,9 @@ with open('categories.json', 'r') as f:
 classes_list = [f'{k}/{x}' for k, v in classes.items() for x in v]
 num_classes = len(classes_list)
 model = Model(num_classes)
+
+le = preprocessing.LabelEncoder()
+le = le.fit(classes_list)
 
 model.load_state_dict(torch.load('model.pt'))
 
@@ -32,7 +36,7 @@ async def classify(input_data: BankStatementData):
     outputs = model(**input)
     logits = outputs['logits']
     preds = torch.argmax(logits, dim=1).cpu().numpy()
-    class_str = classes_list[preds[0]]
+    class_str = le.inverse_transform(preds)[0]
     return class_str
 
 if __name__ == "__main__":
