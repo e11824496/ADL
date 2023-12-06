@@ -1,8 +1,6 @@
-import json
 import unittest
-from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
-from backend import app, get_model, ModelWrapper, BankStatementData
+from backend import app, get_model, ModelWrapper
 import torch
 
 

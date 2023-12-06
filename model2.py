@@ -46,13 +46,18 @@ class Embedding(nn.Module):
 
 
 class Model(torch.nn.Module):
-    def __init__(self, num_classes) -> None:
+    def __init__(self,
+                 num_classes: int,
+                 mean_amount: float,
+                 std_amount: float) -> None:
         super().__init__()
+        self.mean_amount = mean_amount
+        self.std_amount = std_amount
 
         self.embedding = Embedding()
         self.embedding_dim = 768
         self.num_classes = num_classes
-        self.fc1 = torch.nn.Linear(self.embedding_dim, 256)
+        self.fc1 = torch.nn.Linear(self.embedding_dim + 1, 256)
         self.dropout = torch.nn.Dropout(0.1)
         self.relu = torch.nn.ReLU()
         self.fc2 = torch.nn.Linear(256, self.num_classes)
@@ -73,9 +78,14 @@ class Model(torch.nn.Module):
         if isinstance(time, str):
             time = [time]
 
-        x = [f'Time: {time}, Amount: {amount}, Description: {description}'
+        x = [f'Time: {time}, Description: {description}'
              for time, amount, description in zip(time, amount, description)]
         x = self.embedding(x)
+
+        amount = (amount - self.mean_amount) / self.std_amount
+
+        x = torch.cat((x, amount.unsqueeze(1)), dim=1)
+
         x = self.relu(self.fc1(x))
         x = self.dropout(x)
         x = self.fc2(x)

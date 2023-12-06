@@ -16,7 +16,7 @@ class TestClassifyEndpoint(unittest.TestCase):
 
     def test_classify_valid_input(self):
         valid_input = {
-            "amount": 100.0,
+            "amount": -10.0,
             "description": "Eurospar Dankt 4141 Wien 1050",
             "time": "2023-01-01T12:00:00"
         }
