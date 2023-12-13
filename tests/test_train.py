@@ -1,7 +1,6 @@
 import unittest
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from model2 import Model
 from train import CustomDataset, CustomModelTrainer
 
 
@@ -45,7 +44,8 @@ class TestCustomModelTrainer(unittest.TestCase):
         train_texts, val_texts, train_labels, val_labels = train_test_split(
             texts_df, labels_df, test_size=0.2, random_state=42)
         self.trainer = CustomModelTrainer(
-            train_texts, train_labels, val_texts, val_labels, classes_list)
+            train_texts, train_labels, val_texts, val_labels, classes_list,
+            save_path='tests/test_model.pt')
 
     def test_train(self):
         # Test that training does not raise any errors

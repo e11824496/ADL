@@ -12,40 +12,45 @@ class BankStatementProcessor:
         self.paypal_data = pd.read_csv(paypal, dtype=str, index_col=False)
 
     def _preprocess_bank_statements(self) -> None:
+        """
+        Preprocesses the bank statements data by selecting relevant columns,
+        converting data types, extracting time and date information,
+        and combining multiple PayPal rows from one transaction.
+        """
         # Select relevant columns from bank statements
         relevant_bank_columns = ['Datetime', 'Description', 'Amount']
         self.bank_statements = self.bank_statements[relevant_bank_columns]
-        self.bank_statements['Amount'] = self.bank_statements['Amount'].str.replace(',', '.')     # noqa: E501
-        self.bank_statements['Amount'] = self.bank_statements['Amount'].astype(
-            float)
+        self.bank_statements['Amount'] = self.bank_statements['Amount']\
+            .str.replace(',', '.')
+        self.bank_statements['Amount'] = self.bank_statements['Amount']\
+            .astype(float)
 
         # Extract time from 'Datetime' and drop the original column
         self.bank_statements['Datetime'] = pd.to_datetime(
-            self.bank_statements['Datetime'],
-            format='%d.%m.%Y %H:%M:%S:%f')
+            self.bank_statements['Datetime'], format='%d.%m.%Y %H:%M:%S:%f')
         self.bank_statements['Time'] = self.bank_statements['Datetime'].dt.time
         self.bank_statements['Date'] = self.bank_statements['Datetime'].dt.date
         self.bank_statements.drop('Datetime', axis=1, inplace=True)
 
-        self.paypal_data['Gross'] = self.paypal_data['Gross'].apply(lambda x: float(x.replace('.', '').replace(',', '.')))     # noqa: E501
+        self.paypal_data['Gross'] = self.paypal_data['Gross'].apply(
+            lambda x: float(x.replace('.', '').replace(',', '.')))
         self.paypal_data['Date'] = pd.to_datetime(
             self.paypal_data['Date'], format='%d/%m/%Y')
 
-        paypal_completed = self.paypal_data.loc[
-            self.paypal_data['Status'] == 'Completed']
+        paypal_completed = self.paypal_data\
+            .loc[self.paypal_data['Status'] == 'Completed']
         paypal_completed = paypal_completed[[
-            'Date', 'Time', 'Name',
-            'Transaction ID',
-            'Item Title']
-        ]
+            'Date', 'Time', 'Name', 'Transaction ID', 'Item Title']]
 
         paypal_possible_bank_references = self.paypal_data[[
-            'Reference Txn ID', 'Bank Reference ID', 'Gross']
-        ]
+            'Reference Txn ID', 'Bank Reference ID', 'Gross']]
 
         # Merge multiple PayPal rows based on 'Transaction ID'
         self.paypal_data = paypal_completed.merge(
-            paypal_possible_bank_references, left_on='Transaction ID', right_on='Reference Txn ID', how='inner')     # noqa: E501
+            paypal_possible_bank_references,
+            left_on='Transaction ID',
+            right_on='Reference Txn ID',
+            how='inner')
         self.paypal_data['Gross'] = -self.paypal_data['Gross']
         self.paypal_data.reset_index(inplace=True)
 
@@ -57,7 +62,7 @@ class BankStatementProcessor:
         return match.group(1) if match else None
 
     def _paypal_to_bankstatement(self, row: pd.Series, paypal_row: pd.Series) -> pd.Series:     # noqa: E501
-        row['Description'] = f"Verwendungsweck: PayPal {paypal_row['Name']}"                    # noqa: E501
+        row['Description'] = f"Verwendungsweck: PayPal {paypal_row['Name']}"
         if not pd.isnull(paypal_row['Item Title']):
             row['Description'] += f" - {paypal_row['Item Title']}"
 
@@ -67,21 +72,23 @@ class BankStatementProcessor:
 
         return row
 
-    def _replace_paypal_by_bank_reference(self, row: pd.Series) -> pd.Series:                # noqa: E501
+    def _replace_paypal_by_bank_reference(self, row: pd.Series) -> pd.Series:
         if not self._is_paypal_payment(row):
             return row
         bank_reference = self._get_bank_reference(row['Description'])
         if bank_reference in self.paypal_data['Bank Reference ID'].values:
             row = row.copy()
 
-            paypal_row = self.paypal_data.loc[self.paypal_data['Bank Reference ID'] == bank_reference].iloc[0]     # noqa: E501
+            match = self.paypal_data['Bank Reference ID'] == bank_reference
+            paypal_row = self.paypal_data\
+                .loc[match].iloc[0]
 
             row = self._paypal_to_bankstatement(row, paypal_row)
             # drop the row from the PayPal data
             self.paypal_data.drop(paypal_row.name, inplace=True)
         return row
 
-    def _replace_paypal_by_amount_date(self, row: pd.Series) -> pd.Series:                # noqa: E501
+    def _replace_paypal_by_amount_date(self, row: pd.Series) -> pd.Series:
         if not self._is_paypal_payment(row):
             return row
         bank_date = row['Date']
@@ -115,6 +122,11 @@ class BankStatementProcessor:
         return row
 
     def create_dataset(self) -> None:
+        """
+        Preprocesses bank statements, replaces PayPal references,
+        shortens descriptions, and selects relevant columns
+        to create a dataset.
+        """
         self._preprocess_bank_statements()
         self.bank_statements = self.bank_statements.apply(
             self._replace_paypal_by_bank_reference, axis=1)

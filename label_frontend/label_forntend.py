@@ -12,7 +12,7 @@ def get_prediction():
     return predictions.get(current_line) if predictions else None
 
 
-def fetch_prediction_data(line):
+def fetch_bankstatement_data(line):
     row = st.session_state.data.iloc[line]
     return {
         'amount': row.get('Amount', 0),
@@ -33,6 +33,15 @@ def make_prediction_request(data):
 
 
 def fetch_next_predictions():
+    """
+    Fetches the next set of predictions for the label frontend.
+
+    This function retrieves the next set of predictions for the label frontend
+    by iterating over a specified number of lines. It checks if each line has
+    already been labeled or predicted, and if not, fetches the prediction data
+    and makes a prediction request. If predictions are obtained,
+    they are stored in the session state.
+    """
     max_lines = 10
     current_line = st.session_state.current_line
     data_index_len = len(st.session_state.data.index)
@@ -44,13 +53,26 @@ def fetch_next_predictions():
                 line in st.session_state.predictions:
             continue
 
-        data = fetch_prediction_data(line)
+        data = fetch_bankstatement_data(line)
         predictions = make_prediction_request(data)
 
         if predictions:
             st.session_state.predictions[current_line + i] = predictions
             if i == 0:
                 st.rerun()
+
+
+def get_current_label():
+    current_line = st.session_state.current_line
+
+    if current_line in st.session_state.labels.index:
+        category_group = st.session_state.labels\
+            .loc[current_line, 'category_group']
+        category_subgroup = st.session_state.labels\
+            .loc[current_line, 'category_subgroup']
+        return (category_group, category_subgroup)
+
+    return None
 
 
 @st.cache_data
@@ -75,13 +97,13 @@ def select_subgroup(category):
     st.session_state.category_subgroup = category
 
 
-def set_data():
+def set_data_file():
     data_file = st.session_state.dataset_file
     st.session_state.data = load_data(data_file)
-    set_labels()
+    set_labels_file()
 
 
-def set_labels():
+def set_labels_file():
     data_file = st.session_state.labels_file
     st.session_state.labels = pd.DataFrame({
         'category_group': [],
@@ -147,11 +169,11 @@ def main():
 
     st.sidebar.file_uploader(
         "Upload your dataset", type=["csv"], key="dataset_file",
-        on_change=set_data)
+        on_change=set_data_file)
 
     st.sidebar.file_uploader(
         "Upload your existing labels", type=["csv"], key="labels_file",
-        on_change=set_labels)
+        on_change=set_labels_file)
 
     st.sidebar.download_button(
         "Download labels", data=st.session_state.labels.to_csv(),
@@ -160,10 +182,18 @@ def main():
     if st.session_state.data is not None:
         data = st.session_state.data
 
-        prediction = get_prediction()
-        if prediction and st.session_state.category_group is None:
-            st.session_state.category_group = prediction[0]
-            st.session_state.category_subgroup = prediction[1]
+        # Set category group and subgroup if they are not set
+        # and a label or prediction exists for the current line
+        if st.session_state.category_group is None:
+            labels = get_current_label()
+            if labels is not None:
+                st.session_state.category_group = labels[0]
+                st.session_state.category_subgroup = labels[1]
+            else:
+                prediction = get_prediction()
+                if prediction is not None:
+                    st.session_state.category_group = prediction[0]
+                    st.session_state.category_subgroup = prediction[1]
 
         st.subheader("Data")
 
@@ -183,6 +213,7 @@ def main():
         st.subheader("Category Selection")
         cols = st.columns(n_cols)
 
+        # Create category buttons
         for i, group in enumerate(CATEGORIES):
             highlight = group == st.session_state.category_group
             cols[i % n_cols].button(
@@ -190,6 +221,7 @@ def main():
                 use_container_width=True,
                 type='primary' if highlight else 'secondary')
 
+        # Create subcategory buttons if a category is selected
         if st.session_state.category_group:
             st.write("\n")
             st.markdown(
@@ -205,6 +237,7 @@ def main():
                     use_container_width=True,
                     type='primary' if highlight else 'secondary')
 
+        # Create submit button if a category and subcategory are selected
         if st.session_state.category_subgroup:
             text = 'Edit' if st.session_state.current_line in \
                 st.session_state.labels.index else 'Submit'

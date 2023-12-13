@@ -47,6 +47,12 @@ class Embedding(nn.Module):
 
 class Model(torch.nn.Module):
     def __init__(self, num_classes) -> None:
+        """
+        Initializes the model.
+
+        Args:
+            num_classes (int): The number of classes for classification.
+        """
         super().__init__()
 
         self.embedding = Embedding()
@@ -64,6 +70,20 @@ class Model(torch.nn.Module):
                 time: Union[str, list[str]],
                 amount: Union[str, list[str]],
                 label: Union[int, list[int]] = None) -> Tensor:
+        """
+        Forward pass of the model.
+
+        Args:
+            description (Union[str, list[str]]): The description input.
+            time (Union[str, list[str]]): The time input.
+            amount (Union[str, list[str]]): The amount input.
+            label (Union[int, list[int]], optional): The label input.
+                Defaults to None.
+
+        Returns:
+            dict: A dictionary containing the logits and loss
+                (if label is not None).
+        """
         if isinstance(description, str):
             description = [description]
         if isinstance(time, str):
@@ -82,6 +102,7 @@ class Model(torch.nn.Module):
 
         loss = None
         if label is not None:
+            label = label.to(self.embedding.model.device)
             loss = self.loss_fn(x, label)
 
         return {

@@ -24,6 +24,15 @@ class ModelWrapper:
         self.label_encoder = label_encoder
 
     def predict(self, input_data: BankStatementData):
+        """
+        Predicts the class label for the given input data.
+
+        Parameters:
+        input_data (BankStatementData): The input data to be predicted.
+
+        Returns:
+        str: The predicted class label.
+        """
         input_data = input_data.model_dump()
         outputs = self.model(**input_data)
         logits = outputs['logits']
@@ -34,6 +43,13 @@ class ModelWrapper:
 
 @functools.lru_cache()
 def get_model():
+    """
+    Load and return a trained model along with its label encoder.
+
+    Returns:
+        ModelWrapper: A wrapper object containing
+        the trained model and label encoder.
+    """
     with open('categories.json', 'r') as f:
         classes = json.load(f)
 

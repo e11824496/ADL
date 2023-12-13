@@ -1,48 +1,9 @@
-from typing import Any, Union
-import torch.nn.functional as F
-from torch import nn
+from typing import Union
 
 import torch
 from torch import Tensor
-from transformers import AutoTokenizer, AutoModel
 
-
-def average_pool(last_hidden_states: Tensor,
-                 attention_mask: Tensor) -> Tensor:
-    last_hidden = last_hidden_states.masked_fill(
-        ~attention_mask[..., None].bool(), 0.0)
-    return last_hidden.sum(dim=1) / attention_mask.sum(dim=1)[..., None]
-
-
-class Embedding(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            'intfloat/multilingual-e5-base')
-        self.model = AutoModel.from_pretrained('intfloat/multilingual-e5-base')
-
-    def forward(self, input_texts) -> Any:
-
-        if not isinstance(input_texts, list):
-            input_texts = [input_texts]
-
-        # Tokenize the input texts
-        batch_dict = self.tokenizer(
-            input_texts, max_length=512,
-            padding=True,
-            truncation=True,
-            return_tensors='pt')
-
-        batch_dict = {k: v.to(self.model.device)
-                      for k, v in batch_dict.items()}
-        outputs = self.model(**batch_dict)
-        embeddings = average_pool(
-            outputs.last_hidden_state, batch_dict['attention_mask'])
-
-        # normalize embeddings
-        embeddings = F.normalize(embeddings, p=2, dim=1)
-
-        return embeddings
+from model import Embedding
 
 
 class Model(torch.nn.Module):
@@ -50,6 +11,14 @@ class Model(torch.nn.Module):
                  num_classes: int,
                  mean_amount: float,
                  std_amount: float) -> None:
+        """
+        Initializes the model.
+
+        Args:
+            num_classes (int): The number of classes for classification.
+            mean_amount (float): The mean amount.
+            std_amount (float): The standard deviation amount.
+        """
         super().__init__()
         self.mean_amount = mean_amount
         self.std_amount = std_amount
@@ -69,6 +38,20 @@ class Model(torch.nn.Module):
                 time: Union[str, list[str]],
                 amount: Union[str, list[str]],
                 label: Union[int, list[int]] = None) -> Tensor:
+        """
+        Forward pass of the model.
+
+        Args:
+            description (Union[str, list[str]]): The description input.
+            time (Union[str, list[str]]): The time input.
+            amount (Union[str, list[str]]): The amount input.
+            label (Union[int, list[int]], optional): The label input.
+                Defaults to None.
+
+        Returns:
+            dict: A dictionary containing the logits and loss
+                (if label is not None).
+        """
         if isinstance(description, str):
             description = [description]
         if isinstance(time, str):
@@ -83,7 +66,7 @@ class Model(torch.nn.Module):
         x = self.embedding(x)
 
         amount = (amount - self.mean_amount) / self.std_amount
-
+        amount = amount.to(self.embedding.model.device)
         x = torch.cat((x, amount.unsqueeze(1)), dim=1)
 
         x = self.relu(self.fc1(x))
@@ -92,6 +75,7 @@ class Model(torch.nn.Module):
 
         loss = None
         if label is not None:
+            label = label.to(self.embedding.model.device)
             loss = self.loss_fn(x, label)
 
         return {
