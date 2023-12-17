@@ -34,8 +34,6 @@ class TestClassifyEndpoint(unittest.TestCase):
         # Unprocessable Entity due to validation error
         self.assertEqual(response.status_code, 422)
 
-    # Add more test methods as needed
-
 
 if __name__ == "__main__":
     unittest.main()

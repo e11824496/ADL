@@ -16,13 +16,27 @@ def average_pool(last_hidden_states: Tensor,
 
 class Embedding(nn.Module):
     def __init__(self) -> None:
+        """
+        Initializes the Embedding module.
+
+        This module uses a pre-trained tokenizer and model from the
+        'intfloat/multilingual-e5-base' model.
+        """
         super().__init__()
         self.tokenizer = AutoTokenizer.from_pretrained(
             'intfloat/multilingual-e5-base')
         self.model = AutoModel.from_pretrained('intfloat/multilingual-e5-base')
 
     def forward(self, input_texts) -> Any:
+        """
+        Performs forward pass of the Embedding module.
 
+        Args:
+            input_texts (str or List[str]): Input text(s) to be embedded.
+
+        Returns:
+            torch.Tensor: Embeddings of the input text(s).
+        """
         if not isinstance(input_texts, list):
             input_texts = [input_texts]
 

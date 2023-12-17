@@ -16,7 +16,8 @@ class CustomDataset(Dataset):
     A custom dataset class for handling text data with corresponding labels.
 
     Args:
-        texts_df (pandas.DataFrame): DataFrame containing the text descriptions.
+        texts_df (pandas.DataFrame): DataFrame containing the text
+            descriptions.
         labels_df (pandas.DataFrame): DataFrame containing the labels.
         classes_list (list): List of all possible classes.
 
@@ -70,7 +71,7 @@ class CustomModelTrainer:
             val_texts (list): List of validation texts.
             val_labels (list): List of validation labels.
             classes_list (list): List of classes.
-            save_path (str, optional): Path to save the trained model. Defaults to 'model2.pt'.
+            save_path (str, optional): Path to save the trained model
         """
         self.save_path = save_path
         self.train_dataset = CustomDataset(
@@ -93,10 +94,10 @@ class CustomModelTrainer:
         self.model.to(self.device)
 
         self.optimizer = AdamW([
-            {'params': self.model.embedding.parameters(), 'lr': 5e-5},
+            {'params': self.model.embedding.parameters(), 'lr': 1e-5},
             {'params': self.model.fc1.parameters()},
             {'params': self.model.fc2.parameters()},
-        ], lr=5e-3)
+        ], lr=1e-3)
 
         self.scheduler = torch.optim.lr_scheduler.StepLR(
             self.optimizer, step_size=10, gamma=0.9)
@@ -106,10 +107,12 @@ class CustomModelTrainer:
         Performs validation on the trained model.
 
         Args:
-            return_preds (bool, optional): Whether to return the predictions. Defaults to False.
+            return_preds (bool, optional): Whether to return the predictions.
 
         Returns:
-            float or tuple: Average F1 score if return_preds is False, otherwise a tuple containing average F1 score, validation predictions, and validation ground truth.
+            float or tuple: Average F1 score if return_preds is False,
+            otherwise a tuple containing average F1 score,
+            validation predictions, and validation ground truth.
         """
         self.model.eval()
         val_preds = []
@@ -127,12 +130,12 @@ class CustomModelTrainer:
             return average_f1_score, val_preds, val_gt
         return average_f1_score
 
-    def train(self, epochs=30):
+    def train(self, epochs=20):
         """
         Trains the model for the specified number of epochs.
 
         Args:
-            epochs (int, optional): Number of epochs to train the model. Defaults to 30.
+            epochs (int, optional): Number of epochs to train the model.
         """
         for epoch in range(epochs):
             self.model.train()
