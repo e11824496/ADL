@@ -51,7 +51,7 @@ pip install -r requirements.txt
 2. Run the script:
 
    ```python
-   python bank_statement_processor.py
+   python dataset_generation.py
    ```
 
 3. The processed data will be saved as `BankStatements/output.csv`.
@@ -103,5 +103,5 @@ You currently need a model-deployed as a REST-API to fully utilize the Label fro
 
 ```sh
 cd ./label_frontend/
-streamlit label_frontend.py
+streamlit run label_frontend.py
 ```

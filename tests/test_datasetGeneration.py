@@ -1,5 +1,5 @@
 import unittest
-from datasetGeneration import BankStatementProcessor
+from dataset_generation import BankStatementProcessor
 
 
 DATAFOLDER = 'tests/test_data/'
