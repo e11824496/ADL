@@ -21,7 +21,7 @@ WORKDIR /app
 # Copy the installed dependencies from the builder stage
 COPY --from=builder /usr/local /usr/local
 # Copy the current directory contents into the container at /app
-COPY *.py *.pt *.txt *.json /app/
+COPY *.py model.pt *.txt *.json /app/
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
