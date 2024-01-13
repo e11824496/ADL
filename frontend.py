@@ -62,12 +62,32 @@ def load_data(file_path) -> pd.DataFrame:
     return None
 
 
+@st.cache_data
+def load_categories(file_path) -> dict:
+    with open(file_path) as f:
+        categories = json.load(f)
+    return categories
+
+
+def select_group(category):
+    st.session_state.selected_category = category
+
+
+def plot_pie_chart(df, labels):
+    fig, ax = plt.subplots()
+    df.groupby(labels)['Amount'].sum().abs().plot(
+        kind='pie', y='', ax=ax, autopct='%1.1f%%', startangle=90)
+    ax.axis('equal')
+    st.pyplot(fig)
+
+
 def main():
     st.session_state.setdefault("bankstatements", None)
     st.session_state.setdefault("paypal", None)
     st.session_state.setdefault("merged_dataset", None)
+    st.session_state.setdefault("selected_category", "ALL")
 
-    # CATEGORIES = load_categories("categories.json")
+    CATEGORIES = load_categories("categories.json")
 
     st.title("Bank Statement Analysis")
 
@@ -81,13 +101,45 @@ def main():
         "Merge and label data", on_click=merge_and_label_data)
 
     if st.session_state.merged_dataset is not None:
-        st.write(st.session_state.merged_dataset)
-        group_counts = st.session_state.\
-            merged_dataset['category_group'].\
-            value_counts()
-        plt.pie(group_counts, labels=group_counts.index, autopct='%1.1f%%')
-        plt.axis('equal')
-        st.pyplot(plt.gcf())
+        st.subheader("Category Selection")
+        n_cols = len(CATEGORIES)//2
+        cols = st.columns(n_cols)
+        # Create category buttons
+        selected_category = st.session_state.selected_category
+
+        for i, group in enumerate(["ALL"] + list(CATEGORIES.keys())):
+            highlight = group == selected_category
+            cols[i % n_cols].button(
+                group, on_click=select_group, args=(group,),
+                use_container_width=True,
+                type='primary' if highlight else 'secondary')
+
+        if selected_category == "ALL":
+            filterd_df = st.session_state.merged_dataset
+            labels = "category_group"
+        else:
+            filterd_df = st.session_state.merged_dataset[
+                st.session_state.merged_dataset['category_group'] ==
+                selected_category
+            ]
+            labels = "category_subgroup"
+        st.write(filterd_df)
+
+        # plot pie chart for negative values
+        st.subheader("Pie Chart for outgoing payments")
+        filterd_df_negative = filterd_df[filterd_df['Amount'] < 0]
+        if len(filterd_df_negative) == 0:
+            st.write("No data for outgoing payments available")
+        else:
+            plot_pie_chart(filterd_df_negative, labels)
+
+        # plot pie chart for positive values
+        st.subheader("Pie Chart for incoming payments")
+        filterd_df_positive = filterd_df[filterd_df['Amount'] > 0]
+        if len(filterd_df_positive) == 0:
+            st.write("No data for incoming payments available")
+        else:
+            plot_pie_chart(filterd_df_positive, labels)
 
 
 if __name__ == "__main__":

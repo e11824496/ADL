@@ -20,7 +20,7 @@ WORKDIR /app
 # Copy the installed dependencies from the builder stage
 COPY --from=builder /usr/local /usr/local
 # Copy application files
-COPY *.py *.txt /app/
+COPY *.py *.txt *.json /app/
 
 # Expose the port Streamlit runs on
 EXPOSE 8501
