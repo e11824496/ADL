@@ -55,7 +55,7 @@ def get_model():
 
     classes_list = [f'{k}/{x}' for k, v in classes.items() for x in v]
     num_classes = len(classes_list)
-    model = Model(num_classes)
+    model = Model(num_classes, donwload_weights=False)
 
     le = preprocessing.LabelEncoder()
     le = le.fit(classes_list)

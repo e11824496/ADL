@@ -4,7 +4,7 @@ from torch import nn
 
 import torch
 from torch import Tensor
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer, AutoModel, AutoConfig
 
 
 def average_pool(last_hidden_states: Tensor,
@@ -15,7 +15,7 @@ def average_pool(last_hidden_states: Tensor,
 
 
 class Embedding(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, donwload_weights=True) -> None:
         """
         Initializes the Embedding module.
 
@@ -25,7 +25,14 @@ class Embedding(nn.Module):
         super().__init__()
         self.tokenizer = AutoTokenizer.from_pretrained(
             'intfloat/multilingual-e5-base')
-        self.model = AutoModel.from_pretrained('intfloat/multilingual-e5-base')
+
+        if donwload_weights:
+            self.model = AutoModel.from_pretrained(
+                'intfloat/multilingual-e5-base')
+        else:
+            config = AutoConfig.from_pretrained(
+                'intfloat/multilingual-e5-base')
+            self.model = AutoModel.from_config(config)
 
     def forward(self, input_texts) -> Any:
         """
@@ -60,7 +67,7 @@ class Embedding(nn.Module):
 
 
 class Model(torch.nn.Module):
-    def __init__(self, num_classes) -> None:
+    def __init__(self, num_classes, donwload_weights=True) -> None:
         """
         Initializes the model.
 
@@ -69,7 +76,7 @@ class Model(torch.nn.Module):
         """
         super().__init__()
 
-        self.embedding = Embedding()
+        self.embedding = Embedding(donwload_weights=donwload_weights)
         self.embedding_dim = 768
         self.num_classes = num_classes
         self.fc1 = torch.nn.Linear(self.embedding_dim, 256)
