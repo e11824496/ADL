@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import requests
 import matplotlib.pyplot as plt
-
+from io import StringIO
 
 from dataset_generation import BankStatementProcessor
 
@@ -78,7 +78,12 @@ def plot_pie_chart(df, labels):
     df.groupby(labels)['Amount'].sum().abs().plot(
         kind='pie', y='', ax=ax, autopct='%1.1f%%', startangle=90)
     ax.axis('equal')
-    st.pyplot(fig)
+
+    imgdata = StringIO()
+    fig.savefig(imgdata, format="svg")
+    imgdata.seek(0)  # rewind the data
+    svg_data = imgdata.getvalue()
+    st.image(svg_data, width=800)
 
 
 def main():
