@@ -2,14 +2,14 @@ version: '3.8'
 
 services:
   backend:
-    image: your-backend-image
+    image: e11824496/adl:backend
     ports:
       - "8000:8000"
     networks:
       - app-network
 
   frontend:
-    image: your-frontend-image # Replace with your Streamlit frontend image name
+    image: e11824496/adl:frontend
     ports:
       - "8501:8501"
     networks:

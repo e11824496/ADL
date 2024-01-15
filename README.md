@@ -5,6 +5,18 @@ To learn more about the objective, timeframe and anticipated challenges, see the
 
 For a description about the Labling tools, the model and the results, see the [Assignment 2 Report](./Assignment2.md).
 
+## Run the Application
+
+The application is available through docker compose. Run:
+
+```bash
+docker compose up
+```
+
+to fetch the Images and run them. Visit  the [frontend](http://localhost:8501).
+
+To test the functionality of, use the `test/test_data_export_sample.csv` for the Bank-Statements and `test/test_data/paypal_sample.csv` for the corresponding paypal export. To merge those dataset and label them with the included model, click `Merge and Label`. The first time running this, requires the backend to fetch some model-data (Tokenizer), so it might require some time to display the results.
+
 ## Features
 
 ### Dataset Generation
@@ -28,6 +40,10 @@ For model training, the [train.py](./train.py) script offers a straightforward t
 ### REST-API Server
 
 To make model predictions accessible to end-users and the label frontend, we have developed a REST-API server, detailed [here](./backend.py). This server is built using FastAPI, offering a basic yet efficient solution for deploying the model. It's designed for quick deployment, allowing for easy integration with various applications, including the label frontend, for real-time predictions.
+
+### Frontend
+
+There is a basic stream-lit frotend to enable a quick exploration of the predictions and the resulting spending-habit. Future work could extend this work, to enable extensive filtering and visualizations.
 
 ## Run the code
 
