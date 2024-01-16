@@ -5,17 +5,48 @@ To learn more about the objective, timeframe and anticipated challenges, see the
 
 For a description about the Labling tools, the model and the results, see the [Assignment 2 Report](./Assignment2.md).
 
+A simple frontend to explore the categorized expenses is described in my [Assignment 3 Report](./Assignment3.md).
+
+A quick summary of the project, the challenges and main takeaways is available in the [Report](./Report.md).
+
+And here is a quick video displaying the project: [Youtube](https://youtu.be/TTNTPjDMj8I?feature=shared).
+
 ## Run the Application
 
-The application is available through docker compose. Run:
+### Setup and Launch
+
+The application is conveniently available via Docker Compose, which simplifies setup and ensures consistent environments across different systems. The images are provided using Docker Hub. To get started, run the following command in your terminal:
 
 ```bash
 docker compose up
 ```
 
-to fetch the Images and run them. Visit  the [frontend](http://localhost:8501).
+This command fetches the necessary Docker images and runs the containers, setting up both the frontend and backend services.
 
-To test the functionality of, use the `test/test_data_export_sample.csv` for the Bank-Statements and `test/test_data/paypal_sample.csv` for the corresponding paypal export. To merge those dataset and label them with the included model, click `Merge and Label`. The first time running this, requires the backend to fetch some model-data (Tokenizer), so it might require some time to display the results.
+### Accessing the Frontend
+
+After running the Docker Compose command, the frontend of the application will be accessible at:
+
+<http://localhost:8501>
+
+Navigate to this URL in your web browser to interact with the application's user interface.
+
+### Testing the Application
+
+For testing purposes, sample data files are provided:
+
+* Bank Statements: test/test_data_export_sample.csv
+* PayPal Export: test/test_data/paypal_sample.csv
+
+Follow these steps to test the application:
+
+* Upload Data: Use the provided sample files to upload bank statements and PayPal data.
+* Merge and Label: Click on the Merge and Label button in the application. This will combine the datasets and apply labels using the included model.
+* First-Time Setup: During the initial run, the backend needs to fetch some model data (e.g., Tokenizer). This process might take some time, so please be patient as the application prepares and displays the results.
+
+### Notes
+
+The application is designed to handle typical data formats used by my bank and PayPal systems. Ensure your data files are in the correct format for optimal performance.
 
 ## Features
 
@@ -49,10 +80,10 @@ There is a basic stream-lit frotend to enable a quick exploration of the predict
 
 For preprocessing, there is currently a file-structure in place, that handels the bank and paypal statments.
 
-- `BankStatements/` folder:
-  - `export.csv`: Bank statement CSV file.
-  - `paypal.csv`: PayPal transactions CSV file.
-  - `output.csv`: Output file after processing.
+* `BankStatements/` folder:
+  * `export.csv`: Bank statement CSV file.
+  * `paypal.csv`: PayPal transactions CSV file.
+  * `output.csv`: Output file after processing.
 
 Install dependencies
 
@@ -74,26 +105,26 @@ pip install -r requirements.txt
 
 #### Bank Statement CSV (`export.csv`)
 
-- Format: Semi-colon separated values (`;`).
-- Columns: 'Date', 'Description', 'Date2', 'Amount', 'Currency', 'Datetime'.
-- Example:
+* Format: Semi-colon separated values (`;`).
+* Columns: 'Date', 'Description', 'Date2', 'Amount', 'Currency', 'Datetime'.
+* Example:
 
   ```txt
   01-01-2023;Purchase at Store;02-01-2023;123.45;USD;01.01.2023 10:30:00:000
   ```
 
-- This output format is the default if you use Raiffeisenbank csv export.
+* This output format is the default if you use Raiffeisenbank csv export.
 
 #### PayPal CSV (`paypal.csv`)
 
-- Columns: 'Date', 'Time', 'Name', 'Transaction ID', 'Item Title', 'Gross', 'Status', 'Reference Txn ID', 'Bank Reference ID'.
-- Example:
+* Columns: 'Date', 'Time', 'Name', 'Transaction ID', 'Item Title', 'Gross', 'Status', 'Reference Txn ID', 'Bank Reference ID'.
+* Example:
 
   ```txt
   01/01/2023;10:30:00;John Doe;TXN1234;Item A;1,234.56;Completed;REF123;BANK123
   ```
 
-- This output format is the default if you use Paypal activity report export.
+* This output format is the default if you use Paypal activity report export.
 
 ### Training
 
